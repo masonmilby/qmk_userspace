@@ -62,7 +62,7 @@ tap_dance_action_t tap_dance_actions[] = {
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] = LAYOUT(KC_F13, TD(BTN3_DRAG), KC_BTN4, BTN1_SLOW, LT(1, KC_BTN2)),
-    [1] = LAYOUT(G(KC_L), KC_MPLY, KC_BTN5, MO(2), _______),
+    [1] = LAYOUT(G(KC_L), KC_BTN3, KC_BTN5, MO(2), _______),
     [2] = LAYOUT(_______, _______, _______, _______, _______),
     [3] = LAYOUT(_______, _______, _______, _______, _______),
 };
