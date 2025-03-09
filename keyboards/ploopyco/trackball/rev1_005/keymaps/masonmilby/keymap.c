@@ -1,5 +1,13 @@
 #include QMK_KEYBOARD_H
 
+bool drag_scroll_state = false;
+void drag_scroll_set(bool state) {
+    if (drag_scroll_state != state) {
+        drag_scroll_state = state;
+        toggle_drag_scroll();
+    }
+}
+
 typedef struct {
     uint16_t tapk;
     void (*holdfn)(bool);
@@ -50,6 +58,7 @@ void override_dpi(uint16_t dpi) {
 
 enum custom_keycodes {
     BTN1_SLOW = SAFE_RANGE,
+    BTN2_LT1,
 };
 
 enum tap_dance_keycodes {
@@ -61,7 +70,7 @@ tap_dance_action_t tap_dance_actions[] = {
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(KC_F13, TD(BTN3_DRAG), KC_BTN4, BTN1_SLOW, LT(1, KC_BTN2)),
+    [0] = LAYOUT(KC_F13, TD(BTN3_DRAG), KC_BTN4, BTN1_SLOW, BTN2_LT1),
     [1] = LAYOUT(G(KC_L), KC_BTN3, KC_BTN5, MO(2), _______),
     [2] = LAYOUT(_______, _______, _______, _______, _______),
     [3] = LAYOUT(_______, _______, _______, _______, _______),
@@ -87,6 +96,16 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             } else {
                 override_dpi(0);
                 unregister_code(KC_BTN1);
+            }
+            break;
+
+        case BTN2_LT1:
+            if (record->event.pressed) {
+                register_code(KC_BTN2);
+                layer_on(1);
+            } else {
+                unregister_code(KC_BTN2);
+                layer_off(1);
             }
             break;
 
