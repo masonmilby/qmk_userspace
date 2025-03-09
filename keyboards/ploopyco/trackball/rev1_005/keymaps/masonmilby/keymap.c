@@ -86,6 +86,7 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 //------------------//
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    static bool cancel_right_click = false;
     tap_dance_action_t *action;
 
     switch (keycode) {
@@ -101,11 +102,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case BTN2_LT1:
             if (record->event.pressed) {
+                cancel_right_click = false;
                 register_code(KC_BTN2);
                 layer_on(1);
             } else {
                 unregister_code(KC_BTN2);
                 layer_off(1);
+                if (cancel_right_click) {
+                    tap_code(KC_ESC);
+                }
             }
             break;
 
@@ -115,6 +120,13 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 tap_dance_tapk_holdfn_t *tap_hold = (tap_dance_tapk_holdfn_t *)action->user_data;
                 tap_code16(tap_hold->tapk);
             }
+            break;
+
+        default:
+            if (record->event.pressed) {
+                cancel_right_click = true;
+            }
+            break;
     }
     return true;
 }
