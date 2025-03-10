@@ -57,8 +57,7 @@ void override_dpi(uint16_t dpi) {
 //------------------//
 
 enum custom_keycodes {
-    BTN1_SLOW = SAFE_RANGE,
-    BTN2_LT1,
+    CUSTOM_KC = SAFE_RANGE,
 };
 
 enum tap_dance_keycodes {
@@ -70,7 +69,7 @@ tap_dance_action_t tap_dance_actions[] = {
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(KC_F13, TD(BTN3_DRAG), KC_BTN4, BTN1_SLOW, BTN2_LT1),
+    [0] = LAYOUT(KC_F13, TD(BTN3_DRAG), KC_BTN4, KC_BTN1, KC_BTN2),
     [1] = LAYOUT(G(KC_L), KC_BTN3, KC_BTN5, MO(2), _______),
     [2] = LAYOUT(_______, _______, _______, _______, _______),
     [3] = LAYOUT(_______, _______, _______, _______, _______),
@@ -85,34 +84,26 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 
 //------------------//
 
+static bool cancel_right_click = false;
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-    static bool cancel_right_click = false;
     tap_dance_action_t *action;
 
     switch (keycode) {
-        case BTN1_SLOW:
+        case KC_BTN1:
             if (record->event.pressed) {
                 override_dpi(600);
-                register_code(KC_BTN1);
             } else {
                 override_dpi(0);
-                unregister_code(KC_BTN1);
             }
             break;
 
-        case BTN2_LT1:
+        case KC_BTN2:
             if (record->event.pressed) {
                 cancel_right_click = false;
-                register_code(KC_BTN2);
                 layer_on(1);
             } else {
-                unregister_code(KC_BTN2);
                 layer_off(1);
-                if (cancel_right_click) {
-                    wait_ms(5);
-                    tap_code(KC_ESC);
-                    tap_code(KC_ESC);
-                }
             }
             break;
 
@@ -131,4 +122,19 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             break;
     }
     return true;
+}
+
+void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case KC_BTN2:
+            if (!record->event.pressed) {
+                if (cancel_right_click) {
+                    wait_ms(5);
+                    tap_code(KC_ESC);
+                    wait_ms(5);
+                    tap_code(KC_ESC);
+                }
+            }
+            break;
+    }
 }
