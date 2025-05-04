@@ -69,9 +69,9 @@ tap_dance_action_t tap_dance_actions[] = {
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(KC_F13, TD(BTN3_DRAG), KC_BTN4, KC_BTN1, KC_BTN2),
-    [1] = LAYOUT(G(KC_L), KC_BTN3, KC_BTN5, MO(2), _______),
-    [2] = LAYOUT(_______, _______, _______, _______, _______),
+    [0] = LAYOUT(KC_LGUI, TD(BTN3_DRAG), KC_BTN4, KC_BTN1, KC_BTN2),
+    [1] = LAYOUT(LAG(KC_U), KC_BTN3, KC_BTN5, MO(2), _______),
+    [2] = LAYOUT(DPI_CONFIG, _______, _______, _______, _______),
     [3] = LAYOUT(_______, _______, _______, _______, _______),
 };
 
@@ -84,23 +84,25 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 
 //------------------//
 
-static bool cancel_right_click = false;
+static bool is_btn1 = false;
+static bool is_lgui = false;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    bool is_pressed = record->event.pressed;
     tap_dance_action_t *action;
 
     switch (keycode) {
         case KC_BTN1:
-            if (record->event.pressed) {
-                override_dpi(600);
+            if (is_pressed) {
+                override_dpi(300);
             } else {
                 override_dpi(0);
             }
+            is_btn1 = is_pressed;
             break;
 
         case KC_BTN2:
-            if (record->event.pressed) {
-                cancel_right_click = false;
+            if (is_pressed) {
                 layer_on(1);
             } else {
                 layer_off(1);
@@ -109,16 +111,26 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
         case TD(BTN3_DRAG):
             action = &tap_dance_actions[QK_TAP_DANCE_GET_INDEX(keycode)];
-            if (!record->event.pressed && action->state.count && !action->state.finished) {
+            if (!is_pressed && action->state.count && !action->state.finished) {
                 tap_dance_tapk_holdfn_t *tap_hold = (tap_dance_tapk_holdfn_t *)action->user_data;
                 tap_code16(tap_hold->tapk);
             }
             break;
 
-        default:
-            if (record->event.pressed) {
-                cancel_right_click = true;
+        case KC_LGUI:
+            if (!is_btn1) break;
+
+            if (is_pressed) {
+                if (is_lgui) {
+                    unregister_code(KC_LGUI);
+                } else {
+                    register_code(KC_LGUI);
+                }
+                is_lgui = !is_lgui;
             }
+            return false;
+
+        default:
             break;
     }
     return true;
@@ -126,14 +138,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 
 void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
-        case KC_BTN2:
-            if (!record->event.pressed) {
-                if (cancel_right_click) {
-                    wait_ms(5);
-                    tap_code(KC_ESC);
-                    wait_ms(5);
-                    tap_code(KC_ESC);
-                }
+        case KC_BTN1:
+            if (!record->event.pressed && is_lgui) {
+                wait_ms(5);
+                unregister_code(KC_LGUI);
+                is_lgui = false;
             }
             break;
     }
