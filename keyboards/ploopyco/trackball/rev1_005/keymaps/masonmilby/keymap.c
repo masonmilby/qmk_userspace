@@ -140,7 +140,7 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case KC_BTN1:
             if (!record->event.pressed && is_lgui) {
-                wait_ms(5);
+                wait_ms(10);
                 unregister_code(KC_LGUI);
                 is_lgui = false;
             }
