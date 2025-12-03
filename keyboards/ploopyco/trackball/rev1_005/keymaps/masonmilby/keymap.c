@@ -85,7 +85,7 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 //------------------//
 
 static bool is_btn1 = false;
-static bool is_lgui = false;
+static bool drag_lgui = false;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     bool is_pressed = record->event.pressed;
@@ -95,10 +95,11 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KC_BTN1:
             if (is_pressed) {
                 override_dpi(300);
+                is_btn1 = true;
             } else {
                 override_dpi(0);
+                is_btn1 = false;
             }
-            is_btn1 = is_pressed;
             break;
 
         case KC_BTN2:
@@ -121,12 +122,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (!is_btn1) break;
 
             if (is_pressed) {
-                if (is_lgui) {
-                    unregister_code(KC_LGUI);
-                } else {
+                if (!drag_lgui) {
                     register_code(KC_LGUI);
+                    drag_lgui = true;
                 }
-                is_lgui = !is_lgui;
             }
             return false;
 
@@ -139,10 +138,10 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
     switch (keycode) {
         case KC_BTN1:
-            if (!record->event.pressed && is_lgui) {
+            if (!record->event.pressed && drag_lgui) {
                 wait_ms(10);
                 unregister_code(KC_LGUI);
-                is_lgui = false;
+                drag_lgui = false;
             }
             break;
     }
