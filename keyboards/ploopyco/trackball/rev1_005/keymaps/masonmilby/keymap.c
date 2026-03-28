@@ -43,7 +43,7 @@ void tap_dance_tapk_holdfn_reset(tap_dance_state_t *state, void *user_data) {
 }
 
 #define ACTION_TAP_DANCE_TAPK_HOLDFN(tapk, holdfn) \
-    { .fn = {NULL, tap_dance_tapk_holdfn_finished, tap_dance_tapk_holdfn_reset}, .user_data = (void *)&((tap_dance_tapk_holdfn_t){tapk, holdfn, false}), }
+    { .fn = {NULL, tap_dance_tapk_holdfn_finished, tap_dance_tapk_holdfn_reset, NULL}, .user_data = (void *)&((tap_dance_tapk_holdfn_t){tapk, holdfn, false}), }
 
 //------------------//
 
@@ -65,12 +65,12 @@ enum tap_dance_keycodes {
 };
 
 tap_dance_action_t tap_dance_actions[] = {
-    [BTN3_DRAG] = ACTION_TAP_DANCE_TAPK_HOLDFN(KC_BTN3, &drag_scroll_set),
+    [BTN3_DRAG] = ACTION_TAP_DANCE_TAPK_HOLDFN(MS_BTN3, &drag_scroll_set),
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT(KC_LGUI, TD(BTN3_DRAG), KC_BTN4, KC_BTN1, KC_BTN2),
-    [1] = LAYOUT(LAG(KC_U), KC_BTN3, KC_BTN5, MO(2), _______),
+    [0] = LAYOUT(KC_LGUI, TD(BTN3_DRAG), MS_BTN4, MS_BTN1, MS_BTN2),
+    [1] = LAYOUT(LAG(KC_U), MS_BTN3, MS_BTN5, MO(2), _______),
     [2] = LAYOUT(DPI_CONFIG, _______, _______, _______, _______),
     [3] = LAYOUT(_______, _______, _______, _______, _______),
 };
@@ -89,10 +89,9 @@ static bool is_snap = false;
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     bool is_pressed = record->event.pressed;
-    tap_dance_action_t *action;
 
     switch (keycode) {
-        case KC_BTN1:
+        case MS_BTN1:
             if (is_pressed) {
                 override_dpi(300);
                 is_btn1 = true;
@@ -102,7 +101,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             break;
 
-        case KC_BTN2:
+        case MS_BTN2:
             if (is_pressed) {
                 layer_on(1);
             } else {
@@ -110,22 +109,23 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             break;
 
-        case TD(BTN3_DRAG):
-            action = &tap_dance_actions[QK_TAP_DANCE_GET_INDEX(keycode)];
-            if (!is_pressed && action->state.count && !action->state.finished) {
-                tap_dance_tapk_holdfn_t *tap_hold = (tap_dance_tapk_holdfn_t *)action->user_data;
+        case TD(BTN3_DRAG): {
+            tap_dance_state_t *td_state = tap_dance_get_state(QK_TAP_DANCE_GET_INDEX(keycode));
+            if (!is_pressed && td_state && td_state->count && !td_state->finished) {
+                tap_dance_tapk_holdfn_t *tap_hold = (tap_dance_tapk_holdfn_t *)tap_dance_actions[QK_TAP_DANCE_GET_INDEX(keycode)].user_data;
                 tap_code16(tap_hold->tapk);
             }
             break;
+        }
 
         case KC_LGUI:
-            if (!is_btn1) break;
-
-            if (is_pressed) {
-                if (!is_snap) {
-                    register_code(KC_RCTL);
-                    is_snap = true;
-                }
+            if (is_pressed && is_btn1 && !is_snap) {
+                register_code(KC_RCTL);
+                is_snap = true;
+            } else if (is_pressed && !is_btn1) {
+                register_code(KC_LGUI);
+            } else if (!is_pressed && !is_snap) {
+                unregister_code(KC_LGUI);
             }
             return false;
 
@@ -139,7 +139,7 @@ void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
     bool is_pressed = record->event.pressed;
 
     switch (keycode) {
-        case KC_BTN1:
+        case MS_BTN1:
             if (!is_pressed && is_snap) {
                 wait_ms(10);
                 unregister_code(KC_RCTL);
