@@ -1,6 +1,7 @@
 {
     "userspace_version": "1.1",
     "build_targets": [
-        ["ploopyco/trackball/rev1_005", "masonmilby"]
+        ["ploopyco/trackball/rev1_005", "masonmilby"],
+        ["ploopyco/mouse/rev1_003", "masonmilby"]
     ]
 }
